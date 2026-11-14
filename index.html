@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calcula tu n</title>
+<meta name="description" content="Calculadora gratuita de tamaño muestral y potencia estadística, con la fórmula y la referencia de cada cálculo.">
+<style>
+:root{
+  --bg:#f2f5f8; --surface:#fff; --ink:#1c2d3d; --muted:#657383; --line:#dce3e9;
+  --accent:#2869a6; --accent-strong:#194d7d; --accent-soft:#e8f1f8;
+  --warm:#e58b45; --warm-soft:#fbefe4; --bad:#a6423b;
+  --display:"Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --body:"Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --mono:ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#18232c; --surface:#222f3a; --ink:#edf3f7; --muted:#b2c0cc; --line:#3b4b58;
+  --accent:#8ab9e2; --accent-strong:#b2d2ed; --accent-soft:#293d4e;
+  --warm:#f1ad6e; --warm-soft:#44362b; --bad:#f09b91; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#18232c; --surface:#222f3a; --ink:#edf3f7; --muted:#b2c0cc; --line:#3b4b58;
+  --accent:#8ab9e2; --accent-strong:#b2d2ed; --accent-soft:#293d4e;
+  --warm:#f1ad6e; --warm-soft:#44362b; --bad:#f09b91; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.58 var(--body);
+  padding:0 max(22px,env(safe-area-inset-right,0px)) 56px max(22px,env(safe-area-inset-left,0px));
+  background-image:radial-gradient(ellipse at 82% 0%,color-mix(in srgb,var(--accent-soft) 65%,transparent),transparent 34rem)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.12;font-weight:500}
+a{color:var(--accent)}
+.wrap{max-width:1320px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 40px;padding:38px 0 28px;border-bottom:1px solid var(--line)}
+header.top .brand{display:flex;flex-direction:column;gap:5px}
+header.top .eyebrow{margin:0;color:var(--accent);font-size:.7rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+header.top h1{font-size:clamp(2.35rem,5vw,3.75rem);letter-spacing:-.045em}
+header.top h1 span{color:var(--warm);font-family:var(--display);font-style:italic;font-weight:400}
+header.top .tagline{margin:0;color:var(--muted);max-width:55ch;font-size:1rem}
+.layout{display:grid;grid-template-columns:238px minmax(0,1fr);gap:clamp(24px,4vw,58px);margin-top:38px;align-items:start}
+nav.idx{position:sticky;top:20px;align-self:start;display:flex;flex-direction:column;gap:18px;padding:19px 13px;background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--line);border-radius:14px;max-height:calc(100vh - 40px);overflow:auto;box-shadow:0 8px 24px rgb(27 48 65 / .035)}
+nav.idx h3{font:700 .67rem/1.2 var(--body);letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 9px 8px}
+nav.idx button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;font:inherit;font-size:.89rem;color:var(--ink);cursor:pointer;transition:background .18s,color .18s,transform .18s}
+nav.idx button:hover{background:var(--accent-soft);transform:translateX(2px)}
+nav.idx button[aria-current="true"]{background:var(--accent);color:#fff;font-weight:600}
+.mobsel{display:none}
+main{min-width:0;display:flex;flex-direction:column;gap:20px}
+.intro{padding:0 2px 4px}
+.intro::before{content:"ANÁLISIS";display:block;color:var(--accent);font:700 .68rem/1 var(--body);letter-spacing:.16em;margin-bottom:11px}
+.intro h2{font-size:clamp(1.9rem,3.3vw,2.65rem);letter-spacing:-.025em}
+.intro .q{font-size:1.05rem;margin:.55em 0 0;max-width:66ch}
+.intro .when{color:var(--muted);margin:.45em 0 0;max-width:70ch;font-size:.94rem}
+.mode{display:inline-flex;align-self:flex-start;gap:4px;border:1px solid var(--line);border-radius:10px;padding:4px;background:var(--surface);flex-wrap:wrap;box-shadow:0 5px 15px rgb(27 48 65 / .035)}
+.mode button{border:0;background:none;font:inherit;font-size:.88rem;padding:8px 14px;border-radius:7px;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.mode button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(19px,2.5vw,28px);box-shadow:0 8px 28px rgb(27 48 65 / .035)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(280px,.92fr);gap:18px;align-items:stretch}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));gap:17px 18px}
+.f label{display:block;font-weight:650;font-size:.88rem;margin-bottom:6px}
+.f input,.f select{width:100%;font:inherit;font-family:var(--mono);font-size:.93rem;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);transition:border-color .15s,box-shadow .15s,background .15s}
+.f input:hover,.f select:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.f select{font-family:var(--body)}
+.f input:focus,.f select:focus,.freq-table input:focus,button:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent);outline-offset:2px;border-color:var(--accent)}
+.f .h{font-size:.81rem;color:var(--muted);margin-top:6px;line-height:1.45}
+.secttl{display:flex;align-items:center;gap:12px;font:700 .68rem/1 var(--body);letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:24px 0 14px}
+.secttl::after{content:"";height:1px;background:var(--line);flex:1}
+.secttl:first-child{margin-top:0}
+details.helper{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+details.helper summary{cursor:pointer;color:var(--accent);font-weight:650;font-size:.9rem}
+.hbox{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.hrow{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--accent-soft);padding:14px;border-radius:10px}
+.hrow .t{flex-basis:100%;font-size:.88rem;font-weight:650}
+.hrow .f{flex:1 1 110px}
+.hrow button,.copy{font:inherit;font-size:.87rem;border:1px solid var(--accent);color:var(--accent);background:var(--surface);border-radius:8px;padding:9px 13px;cursor:pointer;transition:background .15s,color .15s}
+.hrow button:hover,.copy:hover{background:var(--accent);color:#fff}
+.bench{font-size:.82rem;color:var(--muted);margin:14px 0 0}
+.bench b{color:var(--ink)}
+.result{background:linear-gradient(145deg,var(--accent-soft),color-mix(in srgb,var(--surface) 75%,var(--accent-soft)));border:1px solid color-mix(in srgb,var(--accent) 23%,var(--line));border-radius:14px;padding:clamp(19px,2.5vw,28px);display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 28px rgb(27 48 65 / .04)}
+.result.err{background:var(--warm-soft);border-color:color-mix(in srgb,var(--warm) 35%,var(--line))}
+.big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.big .num{font:500 clamp(2.9rem,7vw,4.5rem)/1 var(--display);letter-spacing:-.04em;color:var(--accent-strong);font-variant-numeric:tabular-nums}
+.big .lbl{font-size:.95rem;color:var(--ink)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.88rem}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-family:var(--mono);font-size:.84rem;font-variant-numeric:tabular-nums;text-align:right}
+.report{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-size:.87rem}
+.report p{margin:0 0 10px}
+.chart svg{width:100%;height:auto;display:block}
+.chart .cap{font-size:.79rem;color:var(--muted)}
+.how h3{font-size:1.55rem;margin-bottom:14px}
+.formula{font-family:var(--mono);font-size:.86rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;line-height:2}
+.formula sub,.formula sup{font-size:.72em}
+.freq-wrap{overflow-x:auto;margin-top:18px;padding-bottom:2px}
+.freq-table{border-collapse:separate;border-spacing:5px;width:auto;min-width:100%}
+.freq-table caption{text-align:left;font-weight:650;margin-bottom:8px}
+.freq-table th,.freq-table td{padding:4px;text-align:center}
+.freq-table th{font-size:.83rem;color:var(--muted);font-weight:650}
+.freq-table input{width:76px;max-width:100%;font:inherit;font-family:var(--mono);padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:right}
+.how p,.how li{max-width:72ch}
+.how ul{padding-left:1.2em;margin:.4em 0}
+.ref{font-size:.86rem;color:var(--muted)}
+.warn{color:var(--bad);font-size:.9rem;margin:0}
+footer{margin-top:42px;border-top:1px solid var(--line);padding-top:17px;color:var(--muted);font-size:.82rem;max-width:90ch}
+@media(max-width:980px){.layout{grid-template-columns:205px minmax(0,1fr);gap:22px}.grid2{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){
+  body{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  header.top{padding:28px 0 22px;gap:11px}
+  .layout{grid-template-columns:minmax(0,1fr);margin-top:24px}
+  nav.idx{display:none}
+  .mobsel{display:block}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .mode{width:100%}
+  .mode button{flex:1 1 180px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <p class="eyebrow">Planificación estadística</p>
+      <h1>Calcula tu <span>n</span></h1>
+    </div>
+    <p class="tagline">Tamaño muestral y potencia estadística, paso a paso. Cada resultado indica la fórmula usada y su referencia, para que puedas contrastarlo con G*Power o R.</p>
+  </header>
+
+  <div class="layout">
+    <nav class="idx" id="idx" aria-label="Tipos de análisis"></nav>
+    <main>
+      <div class="f mobsel"><label for="mobsel">¿Qué análisis vas a hacer?</label><select id="mobsel"></select></div>
+      <section class="intro" id="intro"></section>
+      <div class="mode" role="group" aria-label="Qué quieres calcular" id="mode"></div>
+      <div class="grid2">
+        <section class="panel" id="form" aria-label="Datos de partida"></section>
+        <section class="result" id="result" aria-live="polite"></section>
+      </div>
+      <section class="panel how" id="how"></section>
+    </main>
+  </div>
+  <footer>Los cálculos y los valores que introduces se procesan en tu navegador; esta página no hace solicitudes externas. Los resultados son orientativos y no sustituyen el juicio metodológico sobre el diseño del estudio.</footer>
+</div>
+
+<script id="engine">
+/* ===== Motor estadístico (sin dependencias) ===== */
+const S = (() => {
+  const LG = [0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  function lgamma(x){ if(x<0.5) return Math.log(Math.PI/Math.abs(Math.sin(Math.PI*x)))-lgamma(1-x);
+    x-=1; let a=LG[0]; const t=x+7.5; for(let i=1;i<9;i++) a+=LG[i]/(x+i); return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a); }
+  function erfc(x){ const z=Math.abs(x), t=1/(1+0.5*z);
+    const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));
+    return x>=0?r:2-r; }
+  const pnorm = z => 0.5*erfc(-z/Math.SQRT2);
+  function qnorm(p){
+    const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.3577518672690,-30.66479806614716,2.506628277459239],
+          b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],
+          c=[-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],
+          d=[0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+    let q,r;
+    if(p<0.02425){ q=Math.sqrt(-2*Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    if(p>1-0.02425){ q=Math.sqrt(-2*Math.log(1-p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    q=p-0.5; r=q*q; return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+  function betacf(a,b,x){ const F=1e-300; let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap; if(Math.abs(d)<F)d=F; d=1/d; let h=d;
+    for(let m=1;m<=5000;m++){ const m2=2*m; let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+      d=1+aa*d; if(Math.abs(d)<F)d=F; c=1+aa/c; if(Math.abs(c)<F)c=F; d=1/d; h*=d*c;
+      aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2)); d=1+aa*d; if(Math.abs(d)<F)d=F; c=1+aa/c; if(Math.abs(c)<F)c=F; d=1/d;
+      const del=d*c; h*=del; if(Math.abs(del-1)<3e-15) break; } return h; }
+  function ibeta(a,b,x){ if(x<=0) return 0; if(x>=1) return 1;
+    const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));
+    return x<(a+1)/(a+b+2) ? bt*betacf(a,b,x)/a : 1-bt*betacf(b,a,1-x)/b; }
+  function gammp(a,x){ if(x<=0) return 0; const lp=-x+a*Math.log(x)-lgamma(a);
+    if(x<a+1){ let ap=a,sum=1/a,del=sum; for(let n=0;n<5000;n++){ ap++; del*=x/ap; sum+=del; if(Math.abs(del)<Math.abs(sum)*1e-15) break; } return sum*Math.exp(lp); }
+    let b=x+1-a,c=1e300,d=1/b,h=d; for(let i=1;i<5000;i++){ const an=-i*(i-a); b+=2; d=an*d+b; if(Math.abs(d)<1e-300)d=1e-300; c=b+an/c; if(Math.abs(c)<1e-300)c=1e-300; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<1e-15) break; }
+    return 1-Math.exp(lp)*h; }
+  const pchisq=(x,k)=>gammp(k/2,x/2);
+  const pt=(t,df)=>{ const p=0.5*ibeta(df/2,0.5,df/(df+t*t)); return t>0?1-p:p; };
+  const pf=(x,d1,d2)=> x<=0?0:ibeta(d1/2,d2/2,d1*x/(d1*x+d2));
+  function qgen(cdf,p,lo,hi){ while(cdf(hi)<p) hi*=2; for(let i=0;i<200;i++){ const m=(lo+hi)/2; if(cdf(m)<p) lo=m; else hi=m; if(hi-lo<1e-10) break; } return (lo+hi)/2; }
+  const qt=(p,df)=> p<0.5 ? -qgen(x=>pt(x,df),1-p,0,10) : qgen(x=>pt(x,df),p,0,10);
+  const qf=(p,d1,d2)=>qgen(x=>pf(x,d1,d2),p,0,10);
+  const qchisq=(p,k)=>qgen(x=>pchisq(x,k),p,0,Math.max(10,k*2));
+  const pois=(j,h)=>Math.exp(-h+j*Math.log(h)-lgamma(j+1));
+  function pnchisq(x,k,lam){ if(lam<=0) return pchisq(x,k); const h=lam/2, jm=Math.ceil(h+14*Math.sqrt(h)+40); let s=0;
+    for(let j=0;j<=jm;j++) s+=pois(j,h)*pchisq(x,k+2*j); return Math.min(1,s); }
+  function pnf(x,d1,d2,lam){ if(lam<=0) return pf(x,d1,d2); const h=lam/2, jm=Math.ceil(h+14*Math.sqrt(h)+40), y=d1*x/(d1*x+d2); let s=0;
+    for(let j=0;j<=jm;j++) s+=pois(j,h)*ibeta(d1/2+j,d2/2,y); return Math.min(1,s); }
+  /* Potencia de la t no central por integración numérica sobre la distribución chi de la DT muestral */
+  function powT(delta,df,alpha,tails){
+    const c=qt(1-alpha/tails,df), sq=Math.sqrt(df), mu=Math.sqrt(df), lo=Math.max(0,mu-9), hi=mu+9, N=800, hs=(hi-lo)/N;
+    const lc=(df-1)*0 - ((df/2-1)*Math.LN2+lgamma(df/2));
+    let s=0;
+    for(let i=0;i<=N;i++){ const u=lo+i*hs; if(u<=0 && df>1) continue;
+      const dens=Math.exp(lc+(df-1)*Math.log(Math.max(u,1e-300))-u*u/2);
+      let p=1-pnorm(c*u/sq-delta); if(tails===2) p+=pnorm(-c*u/sq-delta);
+      s+=(i===0||i===N?1:(i%2?4:2))*dens*p; }
+    return Math.min(1,s*hs/3); }
+  return {lgamma,pnorm,qnorm,ibeta,pchisq,pt,pf,qt,qf,qchisq,pnchisq,pnf,powT};
+})();
+
+/* ===== Definición de los análisis ===== */
+const COMMON = {
+  conf:{label:'Nivel de confianza', def:0.95, help:'Con qué seguridad quieres que el intervalo contenga el valor real. Lo habitual es 0,95 (95 %).'},
+  alpha:{label:'Nivel de significación (α)', def:0.05, help:'Riesgo que aceptas de encontrar un efecto que en realidad no existe (error tipo I). Lo habitual es 0,05.'},
+  power:{label:'Potencia deseada (1 − β)', def:0.80, help:'Probabilidad de detectar el efecto si existe de verdad. Lo habitual es 0,80 o 0,90.'},
+  tails:{label:'Hipótesis', type:'select', def:'2', options:[['2','Bilateral (dos colas)'],['1','Unilateral (una cola)']], help:'Bilateral si te vale una diferencia en cualquier dirección. Unilateral solo si la dirección está justificada antes de recoger datos.'},
+  drop:{label:'Pérdidas previstas (%)', def:10, help:'Abandonos, cuestionarios incompletos… La muestra a reclutar se ajusta como n / (1 − pérdidas).'}
+};
+const za=(v)=>S.qnorm(1-v.alpha/(+v.tails||2));
+const pOK=x=>x>0&&x<1;
+
+const MODULES = [
+ { id:'prop', group:'Estimar un valor', name:'Estimar una proporción', kind:'est',
+   q:'¿A cuántas personas necesito preguntar para estimar un porcentaje con la precisión que quiero?',
+   when:'Por ejemplo, la prevalencia de un trastorno, el porcentaje de profesionales que conocen un protocolo o la proporción de casos con una característica.',
+   fields:[
+     {id:'p',label:'Proporción esperada (p)',def:0.5,help:'Lo que esperas encontrar, según estudios previos. Si no tienes ni idea, usa 0,5: es el valor más conservador (da la n más grande).'},
+     {id:'e',label:'Margen de error (±)',def:0.05,help:'Precisión deseada, en tanto por uno. 0,05 significa ± 5 puntos porcentuales.'},
+     {id:'N',label:'Tamaño de la población (opcional)',def:'',help:'Déjalo vacío si la población es grande o desconocida. Si es pequeña (p. ej., 800 colegiados), se aplica la corrección por población finita.'}],
+   common:['conf','drop'],
+   check:v=> !pOK(v.p)?'La proporción debe estar entre 0 y 1.': !(v.e>0&&v.e<0.5)?'El margen de error debe estar entre 0 y 0,5.':null,
+   nFor:v=>{ const z=S.qnorm(1-(1-v.conf)/2), n0=z*z*v.p*(1-v.p)/(v.e*v.e); return v.N>0 ? n0/(1+(n0-1)/v.N) : n0; },
+   precFor:(n,v)=>{ const z=S.qnorm(1-(1-v.conf)/2); let se=Math.sqrt(v.p*(1-v.p)/n); if(v.N>0) se*=Math.sqrt(Math.max(0,(v.N-n)/(v.N-1))); return z*se; },
+   precName:'margen de error', precFmt:x=>'± '+fmt(x*100,1)+' puntos porcentuales',
+   formula:'n<sub>0</sub> = z<sub>1−α/2</sub>² · p(1 − p) / e²<br>Con población finita: n = n<sub>0</sub> / [1 + (n<sub>0</sub> − 1) / N]',
+   method:'Aproximación normal a la distribución binomial (intervalo de Wald). Si esperas una proporción muy extrema (menor de 0,10 o mayor de 0,90) o la n resultante es pequeña, este método puede quedarse corto; conviene contrastarlo con métodos exactos o de Wilson.',
+   refs:'Cochran, W. G. (1977). <i>Sampling techniques</i> (3.ª ed.). Wiley.',
+   report:(v,r)=>`Se calculó el tamaño muestral necesario para estimar una proporción esperada de ${fmt(v.p,2)} con un margen de error de ±${fmt(v.e*100,1)} puntos porcentuales y un nivel de confianza del ${fmt(v.conf*100,0)} %${v.N>0?`, aplicando la corrección por población finita (N = ${fmtI(v.N)})`:''}.`
+ },
+ { id:'mean', group:'Estimar un valor', name:'Estimar una media', kind:'est',
+   q:'¿Cuántas personas necesito para estimar una puntuación media con la precisión que quiero?',
+   when:'Por ejemplo, la puntuación media en una escala de ansiedad en una población, o el tiempo medio de estancia hospitalaria.',
+   fields:[
+     {id:'sd',label:'Desviación típica esperada (σ)',def:10,help:'Variabilidad de la medida, sacada de estudios previos o del manual del instrumento (p. ej., 10 para puntuaciones T, 15 para CI).'},
+     {id:'e',label:'Margen de error (±)',def:2,help:'Precisión deseada, en las mismas unidades que la variable.'},
+     {id:'N',label:'Tamaño de la población (opcional)',def:'',help:'Déjalo vacío si la población es grande o desconocida.'}],
+   common:['conf','drop'],
+   check:v=> !(v.sd>0)?'La desviación típica debe ser mayor que 0.': !(v.e>0)?'El margen de error debe ser mayor que 0.':null,
+   nFor:v=>{ const z=S.qnorm(1-(1-v.conf)/2), n0=Math.pow(z*v.sd/v.e,2); return v.N>0 ? n0/(1+(n0-1)/v.N) : n0; },
+   precFor:(n,v)=>{ const z=S.qnorm(1-(1-v.conf)/2); let se=v.sd/Math.sqrt(n); if(v.N>0) se*=Math.sqrt(Math.max(0,(v.N-n)/(v.N-1))); return z*se; },
+   precName:'margen de error', precFmt:x=>'± '+fmt(x,2)+' unidades',
+   formula:'n<sub>0</sub> = (z<sub>1−α/2</sub> · σ / e)²<br>Con población finita: n = n<sub>0</sub> / [1 + (n<sub>0</sub> − 1) / N]',
+   method:'Aproximación normal con σ conocida. Con muestras pequeñas el intervalo real se calcula con la t de Student y será algo más ancho; la diferencia es despreciable por encima de unas 30 personas.',
+   refs:'Cochran, W. G. (1977). <i>Sampling techniques</i> (3.ª ed.). Wiley.',
+   report:(v)=>`Se calculó el tamaño muestral necesario para estimar una media con un margen de error de ±${fmt(v.e,2)} unidades, asumiendo una desviación típica de ${fmt(v.sd,2)} y un nivel de confianza del ${fmt(v.conf*100,0)} %${v.N>0?`, con corrección por población finita (N = ${fmtI(v.N)})`:''}.`
+ },
+ { id:'tind', group:'Comparar medias', name:'t de Student, muestras independientes',
+   q:'¿Cuántas personas necesito en cada grupo para detectar una diferencia entre dos medias?',
+   when:'Dos grupos distintos medidos una vez: por ejemplo, agresores frente a población general en una escala, o grupo intervención frente a control.',
+   fields:[
+     {id:'d',label:'Tamaño del efecto esperado (d de Cohen)',def:0.5,help:'Diferencia entre medias dividida por la desviación típica. Mejor si sale de estudios previos o de la mínima diferencia clínicamente relevante.'},
+     {id:'k',label:'Razón entre grupos (n₂ / n₁)',def:1,help:'1 = grupos del mismo tamaño. 2 = el grupo 2 tiene el doble que el grupo 1.'}],
+   common:['alpha','power','tails','drop'], nmin:2, unit:'en el grupo 1',
+   helpers:[{t:'A partir de dos medias y una desviación típica común',f:[['m1','Media grupo 1',50],['m2','Media grupo 2',55],['s','DT común',10]],apply:h=>({d:Math.abs(h.m1-h.m2)/h.s})}],
+   bench:'Referencias orientativas de Cohen (1988): <b>0,20</b> pequeño · <b>0,50</b> mediano · <b>0,80</b> grande.',
+   check:v=> !(v.d>0)?'El tamaño del efecto debe ser mayor que 0.': !(v.k>0)?'La razón entre grupos debe ser mayor que 0.':null,
+   n2:(n,v)=>Math.ceil(n*v.k), total:(n,v)=>n+Math.ceil(n*v.k),
+   pow:(n,v)=>{ const n2=Math.ceil(n*v.k); return S.powT(v.d*Math.sqrt(n*n2/(n+n2)), n+n2-2, v.alpha, +v.tails); },
+   formula:'gl = n<sub>1</sub> + n<sub>2</sub> − 2<br>δ = d · √[n<sub>1</sub>n<sub>2</sub> / (n<sub>1</sub> + n<sub>2</sub>)] &nbsp;(parámetro de no centralidad)<br>Potencia = P(|T′<sub>gl, δ</sub>| &gt; t<sub>1−α/2, gl</sub>)<br>Se busca la menor n<sub>1</sub> cuya potencia ≥ 1 − β.',
+   method:'Distribución t no central, igual que G*Power. La potencia se calcula por integración numérica y la n por búsqueda: no es la aproximación normal (que daría 1 o 2 personas menos por grupo).',
+   refs:'Cohen, J. (1988). <i>Statistical power analysis for the behavioral sciences</i> (2.ª ed.). Erlbaum. · Faul, F., Erdfelder, E., Lang, A.-G. y Buchner, A. (2007). G*Power 3. <i>Behavior Research Methods, 39</i>, 175–191.',
+   effTxt:v=>`d = ${fmt(v.d,2)}`, testTxt:v=>`una prueba t de Student para muestras independientes (${tailTxt(v)})`
+ },
+ { id:'tpair', group:'Comparar medias', name:'t de Student, muestras apareadas',
+   q:'¿Cuántas personas necesito si mido a las mismas personas dos veces (antes y después)?',
+   when:'Medidas repetidas en los mismos participantes: pre-post de una intervención, o dos condiciones en las mismas personas. También parejas emparejadas.',
+   fields:[{id:'dz',label:'Tamaño del efecto (d<sub>z</sub>)',def:0.5,help:'Media de las diferencias dividida por la DT de las diferencias. Ojo: no es la misma d que en grupos independientes; usa la ayuda de abajo si partes de una d.'}],
+   common:['alpha','power','tails','drop'], nmin:3, unit:'participantes (pares de medidas)',
+   helpers:[{t:'A partir de la diferencia media y la DT de las diferencias',f:[['md','Diferencia media',3],['sd','DT de las diferencias',6]],apply:h=>({dz:Math.abs(h.md)/h.sd})},
+            {t:'A partir de una d «clásica» y la correlación entre medidas',f:[['d','d de Cohen',0.5],['r','Correlación pre-post (r)',0.5]],apply:h=>({dz:h.d/Math.sqrt(2*(1-h.r))})}],
+   bench:'Cuanto más correlacionadas están las dos medidas, mayor es d<sub>z</sub> para la misma diferencia: por eso los diseños intrasujeto suelen necesitar menos personas.',
+   check:v=> !(v.dz>0)?'El tamaño del efecto debe ser mayor que 0.':null,
+   total:n=>n, pow:(n,v)=>S.powT(v.dz*Math.sqrt(n), n-1, v.alpha, +v.tails),
+   formula:'gl = n − 1<br>δ = d<sub>z</sub> · √n<br>Potencia = P(|T′<sub>gl, δ</sub>| &gt; t<sub>1−α/2, gl</sub>)<br>Conversión: d<sub>z</sub> = d / √[2(1 − r)]',
+   method:'Distribución t no central sobre las diferencias (como G*Power, «Means: difference between two dependent means»).',
+   refs:'Cohen, J. (1988). <i>Statistical power analysis for the behavioral sciences</i> (2.ª ed.). Erlbaum. · Lakens, D. (2013). Calculating and reporting effect sizes. <i>Frontiers in Psychology, 4</i>, 863.',
+   effTxt:v=>`d<sub>z</sub> = ${fmt(v.dz,2)}`, testTxt:v=>`una prueba t de Student para muestras relacionadas (${tailTxt(v)})`
+ },
+ { id:'anova', group:'Comparar medias', name:'ANOVA de un factor',
+   q:'¿Cuántas personas necesito por grupo para comparar las medias de tres o más grupos?',
+   when:'Tres o más grupos independientes medidos una vez: por ejemplo, tres tipos de delito o tres condiciones experimentales.',
+   fields:[{id:'f',label:'Tamaño del efecto (f de Cohen)',def:0.25,help:'Dispersión de las medias de los grupos respecto a la DT dentro de los grupos. Si conoces η², conviértelo abajo.'},
+           {id:'k',label:'Número de grupos (k)',def:3,help:'Grupos de igual tamaño.'}],
+   common:['alpha','power','drop'], nmin:2, unit:'por grupo',
+   helpers:[{t:'A partir de η² (eta cuadrado)',f:[['e2','η²',0.06]],apply:h=>({f:Math.sqrt(h.e2/(1-h.e2))})}],
+   bench:'Cohen (1988): f = <b>0,10</b> pequeño · <b>0,25</b> mediano · <b>0,40</b> grande (equivalen a η² ≈ 0,01 · 0,06 · 0,14).',
+   check:v=> !(v.f>0)?'f debe ser mayor que 0.': !(v.k>=2&&Number.isInteger(v.k))?'El número de grupos debe ser un entero ≥ 2.':null,
+   total:(n,v)=>n*v.k, pow:(n,v)=>{ const N=n*v.k, d1=v.k-1, d2=N-v.k; return 1-S.pnf(S.qf(1-v.alpha,d1,d2),d1,d2,v.f*v.f*N); },
+   formula:'N = k · n; &nbsp;gl<sub>1</sub> = k − 1; &nbsp;gl<sub>2</sub> = N − k<br>λ = f² · N &nbsp;(parámetro de no centralidad)<br>Potencia = P(F′<sub>gl1, gl2, λ</sub> &gt; F<sub>1−α; gl1, gl2</sub>)<br>Conversión: f = √[η² / (1 − η²)]',
+   method:'Distribución F no central (prueba ómnibus), como en G*Power. La potencia corresponde al efecto global, no a comparaciones post hoc concretas.',
+   refs:'Cohen, J. (1988). <i>Statistical power analysis for the behavioral sciences</i> (2.ª ed.). Erlbaum. · Faul et al. (2007). <i>Behavior Research Methods, 39</i>, 175–191.',
+   effTxt:v=>`f = ${fmt(v.f,2)}`, testTxt:v=>`un ANOVA de un factor con ${v.k} grupos`
+ },
+ { id:'pearson', group:'Relación entre variables', name:'Correlación de Pearson',
+   q:'¿Cuántas personas necesito para detectar una correlación entre dos variables cuantitativas?',
+   when:'Dos variables continuas aproximadamente normales y con relación lineal: por ejemplo, años de relación y puntuación en una escala de violencia.',
+   fields:[{id:'r',label:'Correlación esperada (r)',def:0.3,help:'La correlación que esperas en la población, a partir de estudios previos.'}],
+   common:['alpha','power','tails','drop'], nmin:4, unit:'participantes',
+   bench:'Cohen (1988): r = <b>0,10</b> pequeña · <b>0,30</b> mediana · <b>0,50</b> grande.',
+   check:v=> !(Math.abs(v.r)>0&&Math.abs(v.r)<1)?'r debe estar entre −1 y 1 y ser distinta de 0.':null,
+   total:n=>n, pow:(n,v)=>powZ(fz(v.r)*Math.sqrt(n-3), v),
+   formula:'C = ½ · ln[(1 + r) / (1 − r)] &nbsp;(transformación z de Fisher)<br>n = [(z<sub>1−α/2</sub> + z<sub>1−β</sub>) / C]² + 3<br>Potencia = Φ(|C|·√(n − 3) − z<sub>1−α/2</sub>)',
+   method:'Aproximación normal de la z de Fisher. Coincide con el método exacto de G*Power con una diferencia de 0 a 2 personas.',
+   refs:'Cohen, J. (1988). <i>Statistical power analysis for the behavioral sciences</i> (2.ª ed.). Erlbaum. · Hulley, S. B. et al. (2013). <i>Designing clinical research</i> (4.ª ed.). Lippincott.',
+   effTxt:v=>`r = ${fmt(v.r,2)}`, testTxt:v=>`una correlación de Pearson (${tailTxt(v)})`
+ },
+ { id:'spearman', group:'Relación entre variables', name:'Correlación de Spearman',
+   q:'¿Cuántas personas necesito para detectar una correlación por rangos?',
+   when:'Variables ordinales (p. ej., escalas Likert de un ítem) o continuas que no cumplen normalidad o tienen valores extremos.',
+   fields:[{id:'r',label:'Correlación esperada (r<sub>s</sub>)',def:0.3,help:'La correlación de Spearman que esperas en la población.'}],
+   common:['alpha','power','tails','drop'], nmin:4, unit:'participantes',
+   bench:'Se suelen usar los mismos valores orientativos que para Pearson: 0,10 · 0,30 · 0,50.',
+   check:v=> !(Math.abs(v.r)>0&&Math.abs(v.r)<1)?'r<sub>s</sub> debe estar entre −1 y 1 y ser distinta de 0.':null,
+   total:n=>n, pow:(n,v)=>powZ(fz(v.r)*Math.sqrt((n-3)/(1+v.r*v.r/2)), v),
+   formula:'C = ½ · ln[(1 + r<sub>s</sub>) / (1 − r<sub>s</sub>)]<br>Var(C) ≈ (1 + r<sub>s</sub>²/2) / (n − 3)<br>n = (1 + r<sub>s</sub>²/2) · [(z<sub>1−α/2</sub> + z<sub>1−β</sub>) / C]² + 3',
+   method:'Corrección de la varianza de Bonett y Wright para la correlación de Spearman. Da una n algo mayor que Pearson, que es lo esperable al perder información al pasar a rangos.',
+   refs:'Bonett, D. G. y Wright, T. A. (2000). Sample size requirements for estimating Pearson, Kendall and Spearman correlations. <i>Psychometrika, 65</i>, 23–28.',
+   effTxt:v=>`r<sub>s</sub> = ${fmt(v.r,2)}`, testTxt:v=>`una correlación de Spearman (${tailTxt(v)})`
+ },
+ { id:'chi2', group:'Relación entre variables', name:'Chi cuadrado (tablas de contingencia)',
+   q:'¿Cuántas personas necesito para detectar una asociación entre dos variables categóricas?',
+   when:'Dos variables categóricas en una tabla de contingencia: por ejemplo, tipo de apego (3 categorías) y reincidencia (sí/no).',
+   fields:[{id:'source',label:'¿Cómo quieres indicar la asociación?',type:'select',def:'freq',options:[['freq','Introducir frecuencias'],['w','Ya conozco w de Cohen'],['V','Ya conozco V de Cramér']]},
+           {id:'w',label:'Tamaño del efecto (w de Cohen)',def:0.3,show:v=>v.source==='w',help:'En una tabla 2×2, w coincide con φ.'},
+           {id:'V',label:'V de Cramér',def:0.2,show:v=>v.source==='V',help:'La calculadora la convierte a w según el número de filas y columnas.'},
+           {id:'rows',label:'Filas de la tabla',def:2,help:'Categorías de la primera variable (de 2 a 12).'},
+           {id:'cols',label:'Columnas de la tabla',def:2,help:'Categorías de la segunda variable (de 2 a 12).'}],
+   common:['alpha','power','drop'], nmin:5, unit:'participantes en total',
+   bench:'Cohen (1988): w = <b>0,10</b> pequeño · <b>0,30</b> mediano · <b>0,50</b> grande.',
+   check:v=> !(Number.isInteger(v.rows)&&v.rows>=2&&v.rows<=12&&Number.isInteger(v.cols)&&v.cols>=2&&v.cols<=12)?'Filas y columnas deben ser enteros entre 2 y 12.': v.source==='w'&&!(v.w>0)?'w debe ser mayor que 0.':v.source==='V'&&!(v.V>0&&v.V<=1)?'V de Cramér debe ser mayor que 0 y como máximo 1.':!(v.w>0)?'Las frecuencias deben representar una asociación distinta de cero.':null,
+   total:n=>n, pow:(n,v)=>{ const df=(v.rows-1)*(v.cols-1); return 1-S.pnchisq(S.qchisq(1-v.alpha,df),df,v.w*v.w*n); },
+   formula:'gl = (filas − 1)(columnas − 1); &nbsp;λ = w² · N<br>Potencia = P(χ′²<sub>gl, λ</sub> &gt; χ²<sub>1−α; gl</sub>)<br>Desde frecuencias: E<sub>ij</sub> = total fila<sub>i</sub> · total columna<sub>j</sub> / N; &nbsp;w = √[(Σ(O<sub>ij</sub> − E<sub>ij</sub>)² / E<sub>ij</sub>) / N]<br>Desde V de Cramér: w = V · √[min(filas, columnas) − 1]',
+   method:'Distribución chi cuadrado no central (prueba de independencia). Si introduces frecuencias de un estudio piloto, se calcula w a partir de la diferencia entre las frecuencias observadas y las esperadas bajo independencia. Comprueba que las frecuencias esperadas no sean demasiado pequeñas.',
+   refs:'Cohen, J. (1988). <i>Statistical power analysis for the behavioral sciences</i> (2.ª ed.). Erlbaum.',
+   effTxt:v=>`w = ${fmt(v.w,2)}`, testTxt:v=>`una prueba chi cuadrado de independencia en una tabla ${v.rows}×${v.cols}`
+ },
+ { id:'z2p', group:'Proporciones y riesgos', name:'Prueba z de dos proporciones',
+   q:'¿Cuántas personas necesito por grupo para comparar dos porcentajes?',
+   when:'Comparar la proporción de un resultado sí/no entre dos grupos independientes: por ejemplo, % de reincidencia con y sin tratamiento.',
+   fields:[{id:'p1',label:'Proporción en el grupo 1 (p₁)',def:0.30,help:'Por ejemplo, 0,30 = 30 %.'},
+           {id:'p2',label:'Proporción en el grupo 2 (p₂)',def:0.15,help:'La que esperas en el otro grupo.'},
+           {id:'k',label:'Razón entre grupos (n₂ / n₁)',def:1,help:'1 = grupos del mismo tamaño.'}],
+   common:['alpha','power','tails','drop'], nmin:2, unit:'en el grupo 1',
+   bench:'Para comunicarlo como tamaño del efecto se suele usar h de Cohen: h = 2·arcsen√p₁ − 2·arcsen√p₂ (0,20 · 0,50 · 0,80).',
+   check:v=> !(pOK(v.p1)&&pOK(v.p2))?'Las proporciones deben estar entre 0 y 1.': v.p1===v.p2?'Las dos proporciones deben ser distintas.': !(v.k>0)?'La razón debe ser mayor que 0.':null,
+   n2:(n,v)=>Math.ceil(n*v.k), total:(n,v)=>n+Math.ceil(n*v.k), pow:(n,v)=>pow2p(n,Math.ceil(n*v.k),v.p1,v.p2,v),
+   formula:'p̄ = (n<sub>1</sub>p<sub>1</sub> + n<sub>2</sub>p<sub>2</sub>) / (n<sub>1</sub> + n<sub>2</sub>)<br>EE<sub>0</sub> = √[p̄(1 − p̄)(1/n<sub>1</sub> + 1/n<sub>2</sub>)]; &nbsp;EE<sub>1</sub> = √[p<sub>1</sub>(1 − p<sub>1</sub>)/n<sub>1</sub> + p<sub>2</sub>(1 − p<sub>2</sub>)/n<sub>2</sub>]<br>Potencia = Φ[(|p<sub>1</sub> − p<sub>2</sub>| − z<sub>1−α/2</sub>·EE<sub>0</sub>) / EE<sub>1</sub>]',
+   method:'Aproximación normal sin corrección por continuidad (Fleiss). Es equivalente a la chi cuadrado de una tabla 2×2. Si vas a analizar con la prueba exacta de Fisher, la n necesaria será algo mayor.',
+   refs:'Fleiss, J. L., Levin, B. y Paik, M. C. (2003). <i>Statistical methods for rates and proportions</i> (3.ª ed.). Wiley.',
+   effTxt:v=>`p₁ = ${fmt(v.p1,2)} frente a p₂ = ${fmt(v.p2,2)}`, testTxt:v=>`una prueba z de comparación de dos proporciones (${tailTxt(v)})`
+ },
+ { id:'or', group:'Proporciones y riesgos', name:'Odds ratio (OR)',
+   q:'¿Cuántas personas necesito para detectar una odds ratio determinada?',
+   when:'Estudios de casos y controles (p₁ = proporción de expuestos entre los controles) o comparaciones de grupos en las que el efecto se expresa como OR.',
+   fields:[{id:'p1',label:'Proporción de referencia (p₁)',def:0.20,help:'En casos y controles: % de expuestos entre los controles. En cohortes o ensayos: % del evento en el grupo no expuesto.'},
+           {id:'or',label:'Odds ratio esperada',def:2,help:'1 = sin asociación. Por encima de 1, más riesgo; por debajo, protección.'},
+           {id:'k',label:'Razón entre grupos (n₂ / n₁)',def:1,help:'Por ejemplo, 2 controles por caso = 2 si el grupo 1 son casos y el 2 controles.'}],
+   common:['alpha','power','tails','drop'], nmin:2, unit:'en el grupo 1',
+   bench:'Como guía aproximada: OR ≈ 1,5 pequeña, ≈ 2,5 mediana y ≈ 4 grande (Chen, Cohen y Chen, 2010), aunque depende de la proporción de referencia.',
+   check:v=> !pOK(v.p1)?'p₁ debe estar entre 0 y 1.': !(v.or>0&&v.or!==1)?'La OR debe ser mayor que 0 y distinta de 1.': !(v.k>0)?'La razón debe ser mayor que 0.':null,
+   derived:v=>{ const o=v.or*v.p1/(1-v.p1); return {p2:o/(1+o)}; },
+   n2:(n,v)=>Math.ceil(n*v.k), total:(n,v)=>n+Math.ceil(n*v.k),
+   pow:(n,v)=>{ const o=v.or*v.p1/(1-v.p1); return pow2p(n,Math.ceil(n*v.k),v.p1,o/(1+o),v); },
+   formula:'p<sub>2</sub> = OR·p<sub>1</sub> / (1 − p<sub>1</sub> + OR·p<sub>1</sub>)<br>Después se aplica la prueba de dos proporciones:<br>Potencia = Φ[(|p<sub>1</sub> − p<sub>2</sub>| − z<sub>1−α/2</sub>·EE<sub>0</sub>) / EE<sub>1</sub>]',
+   method:'Se convierte la OR en la proporción esperada en el otro grupo y se usa la aproximación normal para dos proporciones (Fleiss), sin corrección por continuidad.',
+   refs:'Fleiss, J. L., Levin, B. y Paik, M. C. (2003). <i>Statistical methods for rates and proportions</i> (3.ª ed.). Wiley. · Chen, H., Cohen, P. y Chen, S. (2010). How big is a big odds ratio? <i>Communications in Statistics, 39</i>, 860–864.',
+   effTxt:v=>`OR = ${fmt(v.or,2)} (p₁ = ${fmt(v.p1,2)})`, testTxt:v=>`la comparación de dos proporciones para detectar una odds ratio (${tailTxt(v)})`
+ },
+ { id:'rr', group:'Proporciones y riesgos', name:'Riesgo relativo (RR)',
+   q:'¿Cuántas personas necesito para detectar un riesgo relativo determinado?',
+   when:'Estudios de cohortes o ensayos en los que se sigue a expuestos y no expuestos y se compara la incidencia de un evento.',
+   fields:[{id:'p1',label:'Riesgo en no expuestos (p₁)',def:0.20,help:'Proporción que desarrolla el evento en el grupo de referencia.'},
+           {id:'rr',label:'Riesgo relativo esperado',def:1.5,help:'1 = mismo riesgo. 1,5 = un 50 % más de riesgo en expuestos.'},
+           {id:'k',label:'Razón entre grupos (n₂ / n₁)',def:1,help:'1 = grupos del mismo tamaño.'}],
+   common:['alpha','power','tails','drop'], nmin:2, unit:'en el grupo 1',
+   check:v=> !pOK(v.p1)?'p₁ debe estar entre 0 y 1.': !(v.rr>0&&v.rr!==1)?'El RR debe ser mayor que 0 y distinto de 1.': !(v.rr*v.p1<1)?'Con ese p₁, el RR implica un riesgo mayor que 1 en expuestos. Revisa los valores.': !(v.k>0)?'La razón debe ser mayor que 0.':null,
+   derived:v=>({p2:v.rr*v.p1}),
+   n2:(n,v)=>Math.ceil(n*v.k), total:(n,v)=>n+Math.ceil(n*v.k), pow:(n,v)=>pow2p(n,Math.ceil(n*v.k),v.p1,v.rr*v.p1,v),
+   formula:'p<sub>2</sub> = RR · p<sub>1</sub><br>Después se aplica la prueba de dos proporciones:<br>Potencia = Φ[(|p<sub>1</sub> − p<sub>2</sub>| − z<sub>1−α/2</sub>·EE<sub>0</sub>) / EE<sub>1</sub>]',
+   method:'Se convierte el RR en la proporción esperada en expuestos y se usa la aproximación normal para dos proporciones (Fleiss), sin corrección por continuidad.',
+   refs:'Fleiss, J. L., Levin, B. y Paik, M. C. (2003). <i>Statistical methods for rates and proportions</i> (3.ª ed.). Wiley.',
+   effTxt:v=>`RR = ${fmt(v.rr,2)} (p₁ = ${fmt(v.p1,2)})`, testTxt:v=>`la comparación de dos proporciones para detectar un riesgo relativo (${tailTxt(v)})`
+ },
+ { id:'regs', group:'Regresión', name:'Regresión lineal simple',
+   q:'¿Cuántas personas necesito para saber si un predictor explica una variable cuantitativa?',
+   when:'Un único predictor y una variable dependiente continua. Es equivalente a contrastar la correlación de Pearson.',
+   fields:[{id:'f2',label:'Tamaño del efecto (f²)',def:0.15,help:'Proporción de varianza explicada respecto a la no explicada. Si conoces R², conviértelo abajo.'}],
+   common:['alpha','power','drop'], nmin:4, unit:'participantes',
+   helpers:[{t:'A partir de R² (o de r, elevándolo al cuadrado)',f:[['R2','R² esperado',0.13]],apply:h=>({f2:h.R2/(1-h.R2)})}],
+   bench:'Cohen (1988): f² = <b>0,02</b> pequeño · <b>0,15</b> mediano · <b>0,35</b> grande.',
+   check:v=> !(v.f2>0)?'f² debe ser mayor que 0.':null,
+   total:n=>n, pow:(n,v)=>powReg(n,1,v),
+   formula:'gl<sub>1</sub> = 1; &nbsp;gl<sub>2</sub> = N − 2<br>λ = f² · N<br>Potencia = P(F′<sub>gl1, gl2, λ</sub> &gt; F<sub>1−α; gl1, gl2</sub>)<br>Conversión: f² = R² / (1 − R²)',
+   method:'Distribución F no central con λ = f²·N, la convención de G*Power («Linear multiple regression: fixed model, R² deviation from zero»).',
+   refs:'Cohen, J. (1988). <i>Statistical power analysis for the behavioral sciences</i> (2.ª ed.). Erlbaum. · Faul, F. et al. (2009). Statistical power analyses using G*Power 3.1. <i>Behavior Research Methods, 41</i>, 1149–1160.',
+   effTxt:v=>`f² = ${fmt(v.f2,3)}`, testTxt:()=>`una regresión lineal simple`
+ },
+ { id:'regm', group:'Regresión', name:'Regresión lineal múltiple',
+   q:'¿Cuántas personas necesito para un modelo de regresión con varios predictores?',
+   when:'Varios predictores y una variable dependiente continua. Se contrasta si el modelo en conjunto explica varianza (R² distinto de 0).',
+   fields:[{id:'f2',label:'Tamaño del efecto (f²)',def:0.15,help:'Para el modelo completo. Si conoces el R² esperado, conviértelo abajo.'},
+           {id:'p',label:'Número de predictores',def:3,help:'Cuenta cada variable dummy como un predictor.'}],
+   common:['alpha','power','drop'], nmin:5, unit:'participantes',
+   helpers:[{t:'A partir de R² del modelo',f:[['R2','R² esperado',0.13]],apply:h=>({f2:h.R2/(1-h.R2)})}],
+   bench:'Cohen (1988): f² = <b>0,02</b> pequeño · <b>0,15</b> mediano · <b>0,35</b> grande. Esta n sirve para el modelo global; para estimar coeficientes concretos con precisión suele hacer falta más.',
+   check:v=> !(v.f2>0)?'f² debe ser mayor que 0.': !(v.p>=1&&Number.isInteger(v.p))?'El número de predictores debe ser un entero ≥ 1.':null,
+   nminFn:v=>v.p+3, total:n=>n, pow:(n,v)=>powReg(n,v.p,v),
+   formula:'gl<sub>1</sub> = p; &nbsp;gl<sub>2</sub> = N − p − 1<br>λ = f² · N<br>Potencia = P(F′<sub>gl1, gl2, λ</sub> &gt; F<sub>1−α; gl1, gl2</sub>)<br>Conversión: f² = R² / (1 − R²)',
+   method:'Distribución F no central con λ = f²·N, igual que G*Power («Linear multiple regression: fixed model, R² deviation from zero»).',
+   refs:'Cohen, J. (1988). <i>Statistical power analysis for the behavioral sciences</i> (2.ª ed.). Erlbaum. · Faul, F. et al. (2009). <i>Behavior Research Methods, 41</i>, 1149–1160.',
+   effTxt:v=>`f² = ${fmt(v.f2,3)}`, testTxt:v=>`una regresión lineal múltiple con ${v.p} predictores`
+ },
+ { id:'logit', group:'Regresión', name:'Regresión logística',
+   q:'¿Cuántas personas necesito para detectar el efecto de un predictor sobre un resultado sí/no?',
+   when:'Variable dependiente dicotómica (p. ej., reincidencia sí/no) y un predictor de interés, continuo o dicotómico, que puede ir acompañado de otras covariables.',
+   fields:[{id:'type',label:'Tipo de predictor de interés',type:'select',def:'c',options:[['c','Continuo'],['b','Dicotómico (sí/no)']],help:'Cambia los datos que se piden a continuación.'},
+           {id:'P',label:'Proporción global del evento (P)',def:0.3,help:'Proporción de «sí» en la muestra, evaluada en la media del predictor.',show:v=>v.type==='c'},
+           {id:'P0',label:'Proporción del evento cuando X = 0 (P₀)',def:0.2,help:'Por ejemplo, % de reincidencia en quienes no tienen el factor.',show:v=>v.type==='b'},
+           {id:'or',label:'Odds ratio esperada',def:1.5,help:'Continuo: OR por cada aumento de 1 DT del predictor. Dicotómico: OR entre X = 1 y X = 0.'},
+           {id:'B',label:'Proporción con X = 1 (B)',def:0.5,help:'Qué parte de la muestra tiene el factor.',show:v=>v.type==='b'},
+           {id:'R2',label:'R² del predictor con las demás covariables',def:0,help:'0 si es el único predictor. Si tiene covariables, el R² de regresarlo sobre ellas (inflación de la varianza).'}],
+   common:['alpha','power','tails','drop'], nmin:5, unit:'participantes',
+   bench:'Por su forma, este cálculo complementa (no sustituye) la regla orientativa de al menos 10 eventos por variable: comprueba ambas.',
+   check:v=> !(v.or>0&&v.or!==1)?'La OR debe ser mayor que 0 y distinta de 1.': !(v.R2>=0&&v.R2<1)?'R² debe estar entre 0 y 1.':
+     v.type==='c' ? (!pOK(v.P)?'P debe estar entre 0 y 1.':null) : (!pOK(v.P0)?'P₀ debe estar entre 0 y 1.': !pOK(v.B)?'B debe estar entre 0 y 1.':null),
+   derived:v=> v.type==='b'? (()=>{ const o=v.or*v.P0/(1-v.P0), P1=o/(1+o); return {P1, Pbar:(1-v.B)*v.P0+v.B*P1}; })() : null,
+   total:n=>n,
+   pow:(n,v)=>{ const ne=n*(1-v.R2);
+     if(v.type==='c'){ return powZ(Math.abs(Math.log(v.or))*Math.sqrt(ne*v.P*(1-v.P)),v); }
+     const o=v.or*v.P0/(1-v.P0), P1=o/(1+o), B=v.B, P=(1-B)*v.P0+B*P1;
+     const se0=Math.sqrt(P*(1-P)/B), se1=Math.sqrt(v.P0*(1-v.P0)+P1*(1-P1)*(1-B)/B);
+     const z=za(v), signal=Math.sqrt(ne*(1-B))*Math.abs(v.P0-P1)/se1, cutoff=z*se0/se1;
+     let power=S.pnorm(signal-cutoff); if(+v.tails===2) power+=S.pnorm(-signal-cutoff); return power; },
+   formula:'<b>Predictor continuo</b> (β = ln OR por 1 DT):<br>n = (z<sub>1−α/2</sub> + z<sub>1−β</sub>)² / [P(1 − P)·β²]<br><b>Predictor dicotómico</b> (P = (1 − B)P<sub>0</sub> + B·P<sub>1</sub>):<br>n = [z<sub>1−α/2</sub>√(P(1 − P)/B) + z<sub>1−β</sub>√(P<sub>0</sub>(1 − P<sub>0</sub>) + P<sub>1</sub>(1 − P<sub>1</sub>)(1 − B)/B)]² / [(P<sub>0</sub> − P<sub>1</sub>)²(1 − B)]<br><b>Con covariables</b>: n<sub>ajustada</sub> = n / (1 − R²)',
+   method:'Fórmulas de Hsieh, Bloch y Larsen basadas en la aproximación normal del contraste de Wald, con el factor de inflación de la varianza para las covariables.',
+   refs:'Hsieh, F. Y., Bloch, D. A. y Larsen, M. D. (1998). A simple method of sample size calculation for linear and logistic regression. <i>Statistics in Medicine, 17</i>, 1623–1634. · Peduzzi, P. et al. (1996). <i>Journal of Clinical Epidemiology, 49</i>, 1373–1379.',
+   effTxt:v=>`OR = ${fmt(v.or,2)} ${v.type==='c'?'por 1 DT del predictor (P = '+fmt(v.P,2)+')':'(P₀ = '+fmt(v.P0,2)+', B = '+fmt(v.B,2)+')'}${v.R2>0?', R² con covariables = '+fmt(v.R2,2):''}`,
+   testTxt:v=>`una regresión logística con un predictor ${v.type==='c'?'continuo':'dicotómico'} (${tailTxt(v)})`
+ }
+];
+
+function fz(r){ return 0.5*Math.log((1+r)/(1-r)); }
+function powZ(stat,v){ const z=za(v), s=Math.abs(stat); let p=S.pnorm(s-z); if(+v.tails===2) p+=S.pnorm(-s-z); return p; }
+function pow2p(n1,n2,p1,p2,v){ const pb=(n1*p1+n2*p2)/(n1+n2), se0=Math.sqrt(pb*(1-pb)*(1/n1+1/n2)), se1=Math.sqrt(p1*(1-p1)/n1+p2*(1-p2)/n2), z=za(v), d=Math.abs(p1-p2);
+  let p=S.pnorm((d-z*se0)/se1); if(+v.tails===2) p+=S.pnorm((-d-z*se0)/se1); return p; }
+function powReg(N,p,v){ const d2=N-p-1; if(d2<1) return 0; return 1-S.pnf(S.qf(1-v.alpha,p,d2),p,d2,v.f2*N); }
+function tailTxt(v){ return +v.tails===1?'unilateral':'bilateral'; }
+function fmt(x,d){ return Number(x).toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function fmtI(x){ return Number(x).toLocaleString('es-ES',{maximumFractionDigits:0,useGrouping:true}); }
+
+/* Menor n con potencia >= objetivo (la potencia crece con n) */
+function solveN(m,v){
+  const lo0=m.nminFn?m.nminFn(v):m.nmin; if(m.pow(lo0,v)>=v.power) return lo0;
+  let lo=lo0, hi=lo0*2; while(m.pow(hi,v)<v.power){ lo=hi; hi*=2; if(hi>2e7) return null; }
+  while(hi-lo>1){ const mid=Math.floor((lo+hi)/2); if(m.pow(mid,v)>=v.power) hi=mid; else lo=mid; }
+  return hi;
+}
+</script>
+
+<script>
+/* ===== Interfaz ===== */
+const $=s=>document.querySelector(s);
+let cur=MODULES[2], mode='n', state={};
+const num=x=>{ if(x===''||x==null) return NaN; return parseFloat(String(x).replace(',','.')); };
+
+function buildNav(){
+  const groups=[...new Set(MODULES.map(m=>m.group))];
+  $('#idx').innerHTML=groups.map(g=>`<div><h3>${g}</h3>${MODULES.filter(m=>m.group===g).map(m=>`<button type="button" data-id="${m.id}">${m.name}</button>`).join('')}</div>`).join('');
+  $('#mobsel').innerHTML=groups.map(g=>`<optgroup label="${g}">${MODULES.filter(m=>m.group===g).map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</optgroup>`).join('');
+  $('#idx').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) select(b.dataset.id); });
+  $('#mobsel').addEventListener('change',e=>select(e.target.value));
+}
+function select(id){
+  cur=MODULES.find(m=>m.id===id); mode='n';
+  document.querySelectorAll('#idx button').forEach(b=>b.setAttribute('aria-current',b.dataset.id===id));
+  $('#mobsel').value=id;
+  try{ history.replaceState(null,'','#'+id); }catch(e){}
+  state={}; render();
+}
+function fieldHTML(f,val){
+  const id='in_'+f.id;
+  const ctl=f.type==='select'
+    ? `<select id="${id}" data-k="${f.id}">${f.options.map(o=>`<option value="${o[0]}"${String(val)===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>`
+    : `<input id="${id}" data-k="${f.id}" inputmode="decimal" autocomplete="off" value="${val===''?'':String(val).replace('.',',')}">`;
+  return `<div class="f"><label for="${id}">${f.label}</label>${ctl}${f.help?`<div class="h">${f.help}</div>`:''}</div>`;
+}
+function values(){
+  const v={};
+  cur.fields.forEach(f=>{ const raw=state[f.id]??f.def; v[f.id]=f.type==='select'?raw:(raw===''?'':num(raw)); });
+  (cur.common||[]).forEach(c=>{ const raw=state[c]??COMMON[c].def; v[c]=COMMON[c].type==='select'?raw:num(raw); });
+  if(!cur.common.includes('tails')) v.tails='2';
+  if(state.nIn!==undefined) v.nIn=num(state.nIn);
+  if(v.drop===undefined||isNaN(v.drop)) v.drop=0;
+  return v;
+}
+function frequencyTableHTML(rows,cols,values){
+  let h='<div class="freq-wrap"><table class="freq-table"><caption>Frecuencias de referencia (estudio piloto o valores esperados)</caption><thead><tr><th scope="col">Fila / columna</th>';
+  for(let c=0;c<cols;c++) h+=`<th scope="col">${c+1}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=0;r<rows;r++){
+    h+=`<tr><th scope="row">${r+1}</th>`;
+    for(let c=0;c<cols;c++){
+      const key=`freq_${r}_${c}`, value=values[key]??'';
+      h+=`<td><input inputmode="numeric" autocomplete="off" aria-label="Frecuencia fila ${r+1}, columna ${c+1}" data-k="${key}" value="${value}"></td>`;
+    }
+    h+='</tr>';
+  }
+  return h+'</tbody></table><p class="h">Introduce recuentos enteros no negativos. Cada fila y columna debe sumar al menos 1.</p></div>';
+}
+function effectFromFrequencies(v){
+  const rows=Number(v.rows), cols=Number(v.cols), matrix=[];
+  let total=0;
+  for(let r=0;r<rows;r++){
+    const row=[];
+    for(let c=0;c<cols;c++){
+      const raw=state[`freq_${r}_${c}`];
+      if(raw===undefined||raw==='') return {error:'Completa todas las frecuencias de la tabla.'};
+      if(!/^[0-9]+$/.test(String(raw))||!Number.isSafeInteger(Number(raw))) return {error:'Las frecuencias deben ser enteros no negativos.'};
+      const count=Number(raw); row.push(count); total+=count;
+    }
+    matrix.push(row);
+  }
+  if(total===0) return {error:'La suma de frecuencias debe ser mayor que 0.'};
+  const rowTotals=matrix.map(row=>row.reduce((a,b)=>a+b,0));
+  const colTotals=Array.from({length:cols},(_,c)=>matrix.reduce((sum,row)=>sum+row[c],0));
+  if(rowTotals.some(n=>n===0)||colTotals.some(n=>n===0)) return {error:'Cada fila y columna debe tener una frecuencia total mayor que 0.'};
+  let chi=0;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const expected=rowTotals[r]*colTotals[c]/total;
+    chi+=(matrix[r][c]-expected)**2/expected;
+  }
+  return {w:Math.sqrt(chi/total)};
+}
+function render(){
+  const m=cur, est=m.kind==='est';
+  $('#intro').innerHTML=`<h2>${m.name}</h2><p class="q">${m.q}</p><p class="when">${m.when}</p>`;
+  $('#mode').innerHTML=`<button type="button" data-m="n" aria-pressed="${mode==='n'}">¿Cuántas personas necesito?</button><button type="button" data-m="p" aria-pressed="${mode==='p'}">${est?'¿Qué precisión tengo con mi n?':'¿Qué potencia tengo con mi n?'}</button>`;
+  $('#mode').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; mode=b.dataset.m; render(); };
+  const v=values();
+  const visible=m.fields.filter(f=>!f.show||f.show(v));
+  let h=`<div class="secttl">${est?'Lo que quieres estimar':'El efecto que esperas'}</div><div class="fields">${visible.map(f=>fieldHTML(f,state[f.id]??f.def)).join('')}</div>`;
+  if(m.id==='chi2'&&v.source==='freq'){
+    const rows=Number(v.rows), cols=Number(v.cols);
+    h+=Number.isInteger(rows)&&rows>=2&&rows<=12&&Number.isInteger(cols)&&cols>=2&&cols<=12
+      ? frequencyTableHTML(rows,cols,state)
+      : '<p class="warn">Indica entre 2 y 12 filas y columnas para crear la tabla.</p>';
+  }
+  if(m.helpers) h+=`<details class="helper"><summary>¿No tienes el tamaño del efecto? Calcúlalo aquí</summary><div class="hbox">${m.helpers.map((hp,i)=>`<div class="hrow" data-h="${i}"><div class="t">${hp.t}</div>${hp.f.map(x=>`<div class="f"><label for="h${i}_${x[0]}">${x[1]}</label><input id="h${i}_${x[0]}" inputmode="decimal" value="${String(x[2]).replace('.',',')}"></div>`).join('')}<button type="button" data-apply="${i}">Usar este valor</button></div>`).join('')}</div></details>`;
+  if(m.bench) h+=`<p class="bench">${m.bench}</p>`;
+  h+=`<div class="secttl">Criterios del contraste</div><div class="fields">${m.common.map(c=>fieldHTML({...COMMON[c],id:c},state[c]??COMMON[c].def)).join('')}`;
+  if(mode==='p') h+=fieldHTML({id:'nIn',label:est?'Tamaño de muestra disponible (n)':`Tamaño de muestra disponible (${m.unit})`,help:'El número de personas analizables que tienes o puedes conseguir.'},state.nIn??'');
+  h+='</div>';
+  $('#form').innerHTML=h;
+  const method=m.id==='chi2'&&v.source==='freq'?'La tabla se usa como referencia para estimar el tamaño de la asociación; no calcula el valor p de esa tabla. Se obtiene w de Cohen comparando cada recuento con el esperado bajo independencia y luego se usa w para calcular la muestra o la potencia. Comprueba que las frecuencias esperadas no sean demasiado pequeñas.':m.method;
+  $('#how').innerHTML=`<h3>Cómo se calcula</h3><div class="formula">${m.formula}</div><p>${method}</p>${est?'':'<p>z<sub>1−α/2</sub> y z<sub>1−β</sub> son los valores críticos de la normal estándar (1,96 y 0,84 para α = 0,05 bilateral y potencia 0,80). En hipótesis unilaterales se usa z<sub>1−α</sub>.</p>'}<p>La muestra a reclutar se ajusta por pérdidas como n<sub>reclutar</sub> = n / (1 − pérdidas), redondeando hacia arriba.</p><p class="ref"><b>Referencias.</b> ${m.refs}</p>`;
+  compute();
+}
+let tmr; function schedule(){ clearTimeout(tmr); tmr=setTimeout(compute,120); }
+$('#form').addEventListener('input',e=>{ const k=e.target.dataset.k; if(!k) return; state[k]=e.target.value;
+  const f=cur.fields.find(x=>x.id===k); if(f&&f.type==='select'){ render(); return; } schedule(); });
+$('#form').addEventListener('change',e=>{ const k=e.target.dataset.k; if(k&&(e.target.tagName==='SELECT'||k==='rows'||k==='cols')){ state[k]=e.target.value; render(); }});
+$('#form').addEventListener('click',e=>{ const b=e.target.closest('[data-apply]'); if(!b) return; const i=+b.dataset.apply, hp=cur.helpers[i], h={};
+  hp.f.forEach(x=>h[x[0]]=num($('#h'+i+'_'+x[0]).value)); const out=hp.apply(h,values());
+  for(const k in out){ if(!isFinite(out[k])){ return; } state[k]=+out[k].toFixed(3); } render(); });
+
+function errBox(msg){ $('#result').className='result err'; $('#result').innerHTML=`<p class="warn">${msg}</p>`; }
+function compute(){
+  const m=cur, v=values(), est=m.kind==='est';
+  for(const c of m.common){ if(isNaN(v[c])&&COMMON[c].type!=='select') return errBox('Revisa los criterios: hay algún campo vacío o no numérico.'); }
+  if(!est&&!(v.alpha>0&&v.alpha<0.5)) return errBox('α debe estar entre 0 y 0,5.');
+  if(!est&&!(v.power>0.5&&v.power<1)) return errBox('La potencia debe estar entre 0,5 y 1 (normalmente 0,80 o 0,90).');
+  if(est&&!(v.conf>0.5&&v.conf<1)) return errBox('El nivel de confianza debe estar entre 0,5 y 1.');
+  if(!(v.drop>=0&&v.drop<90)) return errBox('Las pérdidas deben estar entre 0 y 90 %.');
+  for(const f of m.fields){ if(f.type!=='select'&&f.id!=='N'&&(!f.show||f.show(v))&&isNaN(v[f.id])) return errBox(`Falta el valor de «${f.label.replace(/<[^>]+>/g,'')}».`); }
+  if(m.id==='chi2'){
+    if(!(Number.isInteger(v.rows)&&v.rows>=2&&v.rows<=12&&Number.isInteger(v.cols)&&v.cols>=2&&v.cols<=12)) return errBox('Filas y columnas deben ser enteros entre 2 y 12.');
+    if(v.source==='V') v.w=v.V*Math.sqrt(Math.min(v.rows,v.cols)-1);
+    if(v.source==='freq'){
+      const effect=effectFromFrequencies(v);
+      if(effect.error) return errBox(effect.error);
+      v.w=effect.w;
+    }
+  }
+  if(m.fields.some(f=>f.id==='N')&&state.N!==undefined&&state.N!==''&&!(Number.isInteger(v.N)&&v.N>=2)) return errBox('El tamaño de la población debe ser un entero de al menos 2.');
+  if(v.N===''||isNaN(v.N)) v.N=0;
+  const msg=m.check(v); if(msg) return errBox(msg);
+  $('#result').className='result';
+  const adj=n=>Math.ceil(n/(1-v.drop/100));
+  let H='', rep='';
+  if(est){
+    if(mode==='n'){
+      const n=Math.ceil(m.nFor(v)-1e-9);
+      H=`<div class="big"><span class="num">${fmtI(n)}</span><span class="lbl">personas</span></div>
+       <dl class="kv"><dt>Con ${fmt(v.drop,0)} % de pérdidas</dt><dd>reclutar ${fmtI(adj(n))}</dd><dt>Precisión obtenida</dt><dd>${m.precFmt(m.precFor(n,v))}</dd></dl>`;
+      rep=`${m.report(v)} Se requiere una muestra de ${fmtI(n)} participantes${v.drop>0?`; considerando un ${fmt(v.drop,0)} % de pérdidas, se reclutarán ${fmtI(adj(n))}`:''}.`;
+      H+=chart(x=>m.precFor(x,v), Math.max(5,Math.floor(n/8)), Math.max(n*2.5,30), n, {target:m.kind==='est'?v.e:null, y:'Margen de error', fmtY:x=>fmt(x,m.id==='prop'?2:1), est:true});
+    } else {
+      if(!(v.nIn>=2)) return errBox('Escribe el tamaño de muestra disponible (al menos 2).');
+      if(v.N>0&&v.nIn>v.N) return errBox('La muestra no puede ser mayor que la población.');
+      const e=m.precFor(v.nIn,v);
+      H=`<div class="big"><span class="num" style="font-size:clamp(1.8rem,5vw,2.5rem)">${m.precFmt(e)}</span></div><p style="margin:0">es el ${m.precName} con ${fmtI(v.nIn)} personas y un ${fmt(v.conf*100,0)} % de confianza.</p>`;
+      rep=`Con una muestra de ${fmtI(v.nIn)} participantes, el ${m.precName} esperado es de ${m.precFmt(e)} (nivel de confianza del ${fmt(v.conf*100,0)} %).`;
+      H+=chart(x=>m.precFor(x,v), Math.max(5,Math.floor(v.nIn/8)), Math.max(v.nIn*2.5,30), v.nIn, {y:'Margen de error', fmtY:x=>fmt(x,m.id==='prop'?2:1), est:true});
+    }
+  } else {
+    const der=m.derived?m.derived(v):null;
+    const derTxt=m.id==='chi2'&&v.source!=='w'?`<dt>w calculado</dt><dd>${fmt(v.w,3)}</dd>`:der?(der.p2!==undefined?`<dt>p₂ implícita</dt><dd>${fmt(der.p2,3)}</dd>`:`<dt>P₁ implícita</dt><dd>${fmt(der.P1,3)}</dd><dt>P global</dt><dd>${fmt(der.Pbar,3)}</dd>`):'';
+    const two=!!m.n2;
+    if(mode==='n'){
+      const n=solveN(m,v); if(n==null) return errBox('El efecto es tan pequeño que haría falta una muestra enorme. Revisa los valores.');
+      const tot=m.total(n,v), ach=m.pow(n,v);
+      const lbl=two?'personas en el grupo 1':m.unit==='por grupo'?'personas por grupo':m.unit;
+      H=`<div class="big"><span class="num">${fmtI(n)}</span><span class="lbl">${lbl}</span></div><dl class="kv">`+
+        (two?`<dt>Grupo 2</dt><dd>${fmtI(m.n2(n,v))}</dd>`:'')+
+        (tot!==n?`<dt>Total</dt><dd>${fmtI(tot)}</dd>`:'')+
+        `<dt>Potencia real</dt><dd>${fmt(ach,3)}</dd>${derTxt}<dt>Con ${fmt(v.drop,0)} % de pérdidas</dt><dd>reclutar ${two?fmtI(adj(n))+' + '+fmtI(adj(m.n2(n,v)))+' = '+fmtI(adj(n)+adj(m.n2(n,v))):m.unit==='por grupo'?fmtI(adj(n))+' por grupo ('+fmtI(adj(n)*v.k)+' en total)':fmtI(adj(tot))}</dd></dl>`;
+      const grp=two?` (${fmtI(n)} en el grupo 1 y ${fmtI(m.n2(n,v))} en el grupo 2; ${fmtI(tot)} en total)`:m.unit==='por grupo'?` por grupo (${fmtI(tot)} en total)`:'';
+      const recl=two?adj(n)+adj(m.n2(n,v)):m.unit==='por grupo'?adj(n)*v.k:adj(tot);
+      rep=`Se calculó el tamaño muestral para ${m.testTxt(v)}, con α = ${fmt(v.alpha,2)}, una potencia de ${fmt(v.power,2)} y un tamaño del efecto esperado de ${m.effTxt(v)}. Se requieren ${fmtI(two||m.unit==='por grupo'?n:tot)} participantes${grp}${v.drop>0?`; considerando un ${fmt(v.drop,0)} % de pérdidas, se reclutarán ${fmtI(recl)} en total`:''}.`;
+      const nmin=m.nminFn?m.nminFn(v):m.nmin;
+      H+=chart(x=>m.pow(x,v), nmin, Math.max(n*2.2,nmin+12), n, {target:v.power, y:'Potencia', fmtY:x=>fmt(x,1)});
+    } else {
+      const nmin=m.nminFn?m.nminFn(v):m.nmin;
+      if(!(v.nIn>=nmin)||!Number.isInteger(v.nIn)) return errBox(`Escribe un tamaño de muestra entero de al menos ${nmin} (${m.unit}).`);
+      const pw=m.pow(v.nIn,v), ok=pw>=v.power;
+      H=`<div class="big"><span class="num">${fmt(pw*100,1)} %</span><span class="lbl">de potencia</span></div>
+       <p style="margin:0">${ok?'Con esta muestra se alcanza la potencia deseada.':`No llega a la potencia deseada (${fmt(v.power*100,0)} %). Necesitarías ${fmtI(solveN(m,v)??0)} ${two?'en el grupo 1':m.unit}.`}</p><dl class="kv">${two?`<dt>Grupo 2</dt><dd>${fmtI(m.n2(v.nIn,v))}</dd>`:''}${derTxt}</dl>`;
+      rep=`Con ${fmtI(v.nIn)} participantes ${two?'en el grupo 1 y '+fmtI(m.n2(v.nIn,v))+' en el grupo 2':m.unit==='por grupo'?'por grupo':''}, ${m.testTxt(v)} con α = ${fmt(v.alpha,2)} tiene una potencia de ${fmt(pw,2)} para detectar un efecto de ${m.effTxt(v)}.`;
+      H+=chart(x=>m.pow(x,v), nmin, Math.max(v.nIn*2.2,nmin+12), v.nIn, {target:v.power, y:'Potencia', fmtY:x=>fmt(x,1)});
+    }
+  }
+  const plain=rep.replace(/<sub>(.*?)<\/sub>/g,'$1').replace(/<[^>]+>/g,'');
+  H+=`<div class="report"><p><b>Para tu método:</b> ${rep} Cálculo realizado con la calculadora «Calcula tu n» (método: ${m.refs.split(' · ')[0].replace(/<[^>]+>/g,'').replace(/\..*$/,'')}).</p><button type="button" class="copy" id="cp">Copiar texto</button></div>`;
+  $('#result').innerHTML=H;
+  $('#cp').onclick=async()=>{ const t=$('#result .report p').innerText.replace(/^Para tu método:\s*/,''); try{ await navigator.clipboard.writeText(t); $('#cp').textContent='Copiado'; }catch(e){ const r=document.createRange(); r.selectNodeContents($('#result .report p')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $('#cp').textContent='Texto seleccionado'; } };
+}
+
+function chart(fn,x0,x1,mark,o){
+  x0=Math.max(1,Math.floor(x0)); x1=Math.ceil(x1);
+  const W=560,H=210,L=44,R=12,T=12,B=34, pts=[], K=56;
+  for(let i=0;i<=K;i++){ const x=Math.round(x0+(x1-x0)*i/K); pts.push([x,fn(x)]); }
+  const ymax=o.est?Math.max(...pts.map(p=>p[1]))*1.05:1, ymin=0;
+  const X=x=>L+(x-x0)/(x1-x0)*(W-L-R), Y=y=>T+(1-(y-ymin)/(ymax-ymin))*(H-T-B);
+  const d=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(Math.min(p[1],ymax)).toFixed(1)).join(' ');
+  let g=''; for(let i=0;i<=4;i++){ const yv=ymin+(ymax-ymin)*i/4; g+=`<line x1="${L}" x2="${W-R}" y1="${Y(yv)}" y2="${Y(yv)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(yv)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${o.fmtY(yv)}</text>`; }
+  for(let i=0;i<=4;i++){ const xv=Math.round(x0+(x1-x0)*i/4); g+=`<text x="${X(xv)}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="var(--muted)">${fmtI(xv)}</text>`; }
+  const tg=o.target!=null&&o.target<=ymax?`<line x1="${L}" x2="${W-R}" y1="${Y(o.target)}" y2="${Y(o.target)}" stroke="var(--warm)" stroke-dasharray="5 4"/>`:'';
+  const my=fn(mark);
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.y} según el tamaño de muestra">${g}${tg}<path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <line x1="${X(mark)}" x2="${X(mark)}" y1="${T}" y2="${H-B}" stroke="var(--ink)" stroke-opacity=".35"/><circle cx="${X(mark)}" cy="${Y(Math.min(my,ymax))}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>
+    <text x="${(L+W-R)/2}" y="${H-4}" text-anchor="middle" font-size="11" fill="var(--muted)">Tamaño de muestra (${cur.kind==='est'?'n':cur.n2?'grupo 1':cur.unit})</text></svg>
+    <div class="cap">${o.y} según el tamaño de muestra.${o.target!=null?' La línea discontinua marca el objetivo.':''}</div></div>`;
+}
+
+buildNav();
+const start=(location.hash||'').slice(1); select(MODULES.some(m=>m.id===start)?start:'tind');
+</script>
+</body>
+</html>
